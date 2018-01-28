@@ -1,7 +1,24 @@
-
+var fnews = [];
+var tweets = [];
 var socket = io.connect('http://tweetslash-hjohnsto298358.codeanyapp.com:8080/');
-socket.on('hello', function(data) {
-	console.log(data);
+
+var fakenews = false;
+var trumptweets = false;
+socket.on('Fake News', function(data) {
+	//console.log(data);
+	fnews = data;
+	fakenews = true;
+	if (fakenews && trumptweets) {
+			init();
+	}
+})
+socket.on('Trump Tweets', function(data) {
+	//console.log(data);
+	tweets = data;
+	trumptweets = true;
+	if (fakenews && trumptweets) {
+			init();
+	}
 })
 
 var player;
@@ -12,6 +29,8 @@ var dist = Math.max(width,height)*1.5;
 var slow = 400;
 var mousex=0;
 var mousey=0;
+var lightsaberImg;
+var generateBoxes;
 
 var gameArea = {
 	canvas : document.createElement("canvas"),
@@ -50,11 +69,11 @@ var gameArea = {
       
       outofboundsCheck(boxes[i]); // is the box in the canvas?
       var b = boxes[i];
-      if (b.display == true) {
+      if (b.display === true) {
         ctx.fillStyle = "red";
         ctx.fillRect(b.x-b.width/2,b.y-b.height/2,b.width,b.height);
         ctx.fillStyle = "black";
-        ctx.font = "40px Arial";
+        ctx.font = "20px Arial";
         ctx.fillText(b.text,b.x-b.width/2,b.y+b.height/2);
       }
       boxes[i].x+=b.vx;
@@ -65,15 +84,15 @@ var gameArea = {
     
     // remove a box from the list if there are any finished boxes
     var remove = -1;
-    for (var i=0; i< boxes.length; i+=1) {
-      if (boxes[i].done == true) {
+    for (var j=0; j< boxes.length; j+=1) {
+      if (boxes[j].done === true) {
         //console.log("done")
-        remove = i;
+        remove = j;
         break;
       }
     }
     if (remove > -1) {
-      boxes.splice(i, 1);
+      boxes.splice(j, 1);
       //console.log(boxes)
     }
     
@@ -96,9 +115,12 @@ function Player() {
     pl.x=x-pl.width/2;
     pl.y=y-pl.height/2;
     
-    pl.orientation = Math.atan((my-y)/(mx-x)); // might be wrong // probably right
+		var neg = (mx-x < 0) ? true : false;
+    var angle = Math.atan((my-y)/(mx-x));
+		pl.orientation = (neg) ? angle + Math.PI : angle;
+		//console.log(pl.orientation);
     
-    console.log((my-y)/(mx-x),"   ",pl.orientation)
+    //console.log((my-y)/(mx-x),"   ",pl.orientation)
     
     ctx = gameArea.context;
     ctx.save();
@@ -109,11 +131,16 @@ function Player() {
 	  ctx.fillStyle = "blue";
     //ctx.fillRect(x-pl.width/2, y-pl.height/2, pl.width, pl.height);
     ctx.fillRect(0, 0, pl.width, pl.height);
+		
+		ctx.drawImage(lightsaberImg,50,10,100,10);
+		
     ctx.restore();
+		
+		
 	}
   return pl;
 }
-function Box(angle) {
+function Box(text, angle) {
   
   this.height=30;
   this.width=250;
@@ -133,19 +160,44 @@ function Box(angle) {
   this.display = false;
   this.done = false;
   
-  this.text = "this is a tweet";
+  this.text = text;
   
 }
 
 function createBox() {
+	if (generateBoxes === false) {
+		return;
+	}
+	/* Randomly select text from tweets and fake news */
+	var n = Math.floor(Math.random() * 100);
+	var text;
+	if(n % 2 === 0){
+		//console.log("F news lenght: %d", fnews.length);
+		//console.log(fnews);
+		text = "";
+		while((text === "") || (typeof text === "undefined")){
+				
+				text = fnews[Math.floor(Math.random() * fnews.length)];	
+			  //console.log("loop",text)
+		}
+		//console.log("even",text)
+	}
+	else{
+		//console.log("Tweets length: %d", tweets.length);
+		text = "";
+		while((text === "") || (typeof text === "undefined")){
+			text = tweets[Math.floor(Math.random() * tweets.length)];
+		}
+		//console.log("odd:",text);
+	}
   var angle = Math.random() * Math.PI*2;     // returns a number between 0 and 100
-  boxes.push(new Box(angle));
+  boxes.push(new Box(text, angle));
 }
 
 function outofboundsCheck(box) {
   if (box.x > width || box.x<0 || box.y > height || box.y<0) {
     //console.log("out of bounds");
-    if (box.display == true) {
+    if (box.display === true) {
       box.display = false;
       box.done = true; 
     }
@@ -170,14 +222,15 @@ function getMousePos(canvas, evt) {
       
 
 
-// when the window loads, do this:
-window.onload = function() {
+function init() {
 
-	//base_image = new Image();
-	//base_image.src = 'https://www.rochester.edu/aboutus/images/Rocky-now.png';
-	//tornado_image = new Image();
-	//tornado_image.src = 'https://flashdba.files.wordpress.com/2013/10/tornado.png';
+	lightsaberImg = new Image();
 
+	lightsaberImg.onerror = function() {
+		console.log("image is broken");
+	}
+	lightsaberImg.src = '/img/lightsaber1.png'
+	
   gameArea.prep();
 	player = Player();
   
@@ -187,13 +240,47 @@ window.onload = function() {
     mousex = mousePos.x;
     mousey = mousePos.y;
   }, false);
+	gameArea.canvas.addEventListener('click', function(evt) { 
+		console.log(player.orientation);
+		var toDelete = [];
+		
+		// calculate sword coordinates
+		var swordlen = 100;
+		var swordx = player.x + swordlen*Math.cos(player.orientation);
+		var swordy = player.y + swordlen*Math.sin(player.orientation);
+		
+    for (var i=0; i<boxes.length; i+=1) {
+			var b = boxes[i];
+			var d = Math.sqrt(Math.pow(swordx-b.x,2)+Math.pow(swordy-b.y,2));
+			
+			if (d < 80) { // distance from box to sword
+					toDelete.push(i);
+			}
+		}
+		// delete boxes in toDelete
+		for (var j=0; j<toDelete.length; j+=1) {
+			boxes.splice(toDelete[j],1);
+		}
+		
+  }, false);
 
   setInterval(createBox, 1000); 
    
 	gameArea.start();
-
 }
 
+window.onload = function() {
+		generateBoxes = true;
+}
+
+
+window.onblur = function () { // do not load boxes 
+		generateBoxes = false;
+}
+
+window.onfocus = function() {
+	generateBoxes = true;
+}
 
 
 

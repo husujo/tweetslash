@@ -15,31 +15,42 @@ const NewsAPI = require('newsapi'); // news api
 
 var csv = require("fast-csv");
 
+//console.log(__dirname);
+//console.log(path.resolve(__dirname, 'client'));
 app.use(express.static(path.resolve(__dirname, 'client'))); //tells what path the client is  // dont worry
-
+//app.use('/static', express.static('client'))
+//console.log(path.resolve(__dirname, 'client'));
 ////////////////////////////////// the server running VVVV ///////////////////////////////////////  // dont worry
 
-http.listen(8080, "0.0.0.0", function(){
+http.listen(8080, "0.0.0.0", function(request, response){
 //server.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0", function(){
   var addr = http.address();
   console.log("Chat server listening at", addr.address + ":" + addr.port);
 });
+
+// /img/lightsaber.png
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
 
 ///////////////////////////////// TWITTER API //////////////////////////////////
 
+var tweets = []; /* Trump tweets */
 //Callback functions for twitter
+
+var ntweets = 100;
 var error = function (err, response, body) {
-	console.log('ERROR [%s]', err);
+	//console.log('ERROR [%s]', err);
 	//console.log(err);
 };
 var success = function (data) {
 	var obj = JSON.parse(data);
 	console.log("*************");
- //	console.log(obj);
-	//console.log(obj[0].text);
+	for(i = 0; i < ntweets; i++){
+// 	 	console.log(obj);
+ 		//console.log(obj[i].text);
+		tweets.push(obj[i].text);
+	}
 };
 	
 //  Get this data from your twitter apps dashboard
@@ -52,7 +63,7 @@ var twitterconfig = {
 }
 
 var twitter = new Twitter(twitterconfig);
-twitter.getUserTimeline({'screen_name':"realDonaldTrump", 'count': 20}, error, success);
+twitter.getUserTimeline({'screen_name':"realDonaldTrump", 'count': ntweets}, error, success);
 //twitter.getSearch({'q':'#haiku','count': 1}, error, success);
 
 
@@ -68,6 +79,7 @@ csv
  .on("end", function(){
     // console.log("done");
  });
+
 
 
 ///////////////////////////////// NEWS API //////////////////////////////////
@@ -86,20 +98,6 @@ newsapi.v2.topHeadlines({
 
 io.sockets.on('connection', function (socket) {
 	console.log("someone connected");
-	socket.emit('hello','hello world');
+	socket.emit('Fake News',fnews);
+	socket.emit('Trump Tweets',tweets);																					 
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
