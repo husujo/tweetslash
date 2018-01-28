@@ -130,9 +130,7 @@ function Player() {
     ctx.translate( width/2, height/2 );
     ctx.rotate( pl.orientation );
     ctx.translate( -pl.width/2, -pl.height/2 );
-// 	  ctx.fillStyle = "blue";
-//     ctx.fillRect(0, 0, pl.width, pl.height);
-		console.log("drawing player sprite ,",pl.picnum);
+// 		console.log("drawing player sprite ,",pl.picnum);
 		ctx.drawImage(pl.pic,0,0,pl.width,pl.height);
 		ctx.drawImage(lightsaberImg,50,10,100,10);
     ctx.restore();
@@ -142,13 +140,13 @@ function Player() {
 }
 
 function swing(picnum) {
-	console.log("swing");
+// 	console.log("swing");
 	setPlayerSprite(picnum+1);
 	setTimeout(function() {setPlayerSprite(picnum+2);},100);
 	setTimeout(function() {setPlayerSprite(picnum);},200);
 }
 function setPlayerSprite(sprite_index) {
-	console.log("swing",sprite_index);
+// 	console.log("swing",sprite_index);
 	player.pic = player_sprites[sprite_index];
 }
 
@@ -254,10 +252,8 @@ function updateBox(box) {
       ctx.fillStyle = "pink";
       ctx.fillRect(px,py,dx,dy);
       ctx.fillStyle = "black";
-      //ctx.rect(px,py,dx,dy);
-      //ctx.stroke();
       wrapText(ctx, box.text, px+70, py+30, 350, 20);
-    	ctx.drawImage(intenseTrump, px, py, 60, 80);
+    	ctx.drawImage(intenseTrump, px, py, 70, 85);
 	
 }
 
@@ -292,7 +288,7 @@ function init() {
   }, false);
 	gameArea.canvas.addEventListener('click', function(evt) {
 		swing(player.picnum);
-		console.log(player.orientation);
+// 		console.log(player.orientation);
 		var toDelete = [];
 		
 		// calculate sword coordinates
