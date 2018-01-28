@@ -1,22 +1,32 @@
 /**************************** Imports ****************************************/
-var http = require('http'); // dont worry
-var path = require('path'); // dont worry
+
 
 var async = require('async');  // dont worry
-//var socketio = require('socket.io'); // client-server communication
-var express = require('express'); // server libs  // dont worry
+var express = require('express');
+var app = express();
+var http = require('http').createServer(app);
+var io = require('socket.io');
+io = io.listen(http);
 
-var router = express();  // dont worry
-var server = http.createServer(router); // the server  // dont worry
-//var io = socketio.listen(server); // socket lib variable
-// var io = require('socket.io')(server);
+var path = require('path'); // dont worry
 
 var Twitter = require('twitter-node-client').Twitter; // twitter api
 const NewsAPI = require('newsapi'); // news api
 
 var csv = require("fast-csv");
 
-router.use(express.static(path.resolve(__dirname, 'client'))); //tells what path the client is  // dont worry
+app.use(express.static(path.resolve(__dirname, 'client'))); //tells what path the client is  // dont worry
+
+////////////////////////////////// the server running VVVV ///////////////////////////////////////  // dont worry
+
+http.listen(8080, "0.0.0.0", function(){
+//server.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0", function(){
+  var addr = http.address();
+  console.log("Chat server listening at", addr.address + ":" + addr.port);
+});
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
 
 ///////////////////////////////// TWITTER API //////////////////////////////////
 
@@ -70,32 +80,26 @@ newsapi.v2.topHeadlines({
   //console.log(response);
 });
 
-/////////////////////////////////////////////////////////////////////////////
-
-////////////////// SOCKET STUFF
-
-// io.on('connection', function (socket) {
-// 	console.log("someone connected");
-// });
 
 
+////////////////// SOCKET STUFF /////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
-
-
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////// the server running VVVV ///////////////////////////////////////  // dont worry
-
-server.listen(8080, "0.0.0.0", function(){
-//server.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0", function(){
-  var addr = server.address();
-  console.log("Chat server listening at", addr.address + ":" + addr.port);
+io.sockets.on('connection', function (socket) {
+	console.log("someone connected");
+	socket.emit('hello','hello world');
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

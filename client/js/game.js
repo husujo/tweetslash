@@ -1,4 +1,9 @@
 
+var socket = io.connect('http://tweetslash-hjohnsto298358.codeanyapp.com:8080/');
+socket.on('hello', function(data) {
+	console.log(data);
+})
+
 var player;
 var boxes = [];
 const width = window.innerWidth;
