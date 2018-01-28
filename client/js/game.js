@@ -1,3 +1,6 @@
+
+ 
+
 var fnews = [];
 var tweets = [];
 var socket = io.connect('http://tweetslash-hjohnsto298358.codeanyapp.com:8080/');
@@ -33,10 +36,29 @@ var mousex=0;
 var mousey=0;
 var lightsaberImg;
 var slashImg;
+var explosionImg;
+var whitehouseImg;
 var slashes = []; // the list of slashes present to be drawn
+var explosions = [];
 var trumpPic;
 var intenseTrump;
 var generateBoxes;
+var health = 90;
+var score = 0;
+var audio = new Audio('/sounds/stab.mp3');
+audio.volume = 1;
+audio.playbackRate = 2;
+var song = new Audio('/sounds/freebird.mp3');
+song.volume = 0.6;
+song.play();
+var china = new Audio('/sounds/china.mp3');
+china.volume = 0.2;
+china.playbackRate = 1.3;
+
+var directions = true;
+var gameover = false;
+var directionsText = "";//"Click to slash the trump tweets!\nNeed 20 points to build the wall";
+
 
 // load the player sprites
 var player_sprites = ['down1.png','down2.png','down3.png','left1.png','left2.png','left3.png','right1.png','right2.png','right3.png','top1.png','top2.png','top3.png'];
@@ -48,12 +70,15 @@ for (var s=0; s<player_sprites.length; s+=1) {
 
 
 var gameArea = {
-	canvas : document.createElement("canvas"),
+	canvas : document.getElementById("myCanvas"),
   prep : function() {
 		this.canvas.width = width;
 		this.canvas.height = height;    
 		this.context = this.canvas.getContext("2d");
-		document.body.insertBefore(this.canvas, document.body.childNodes[0]); // ?
+		var ctx = gameArea.context;
+		ctx.fillStyle = "48pt Calibri";
+		ctx.fillText(directionsText,100,100);
+		//document.body.insertBefore(this.canvas, document.body.childNodes[0]); // ?
   },
 	start : function() {
     this.interval = setInterval(this.update, 5);
@@ -63,8 +88,15 @@ var gameArea = {
 	},  
   // function to use to update the game area. lots happens here
   update : function() { 
+		document.getElementById("tut").style.display = "none";
     gameArea.clear();
     var ctx = gameArea.context; 
+		
+		ctx.globalAlpha = 0.5;
+		ctx.drawImage(whitehouseImg,0,0,width,height);
+		ctx.globalAlpha = 1;
+		
+		
     player.update(width/2,height/2,mousex,mousey);
     
     // draw the boxes
@@ -101,6 +133,24 @@ var gameArea = {
 		for (var r=0; r<rem.length; r+=1) {
 			slashes.splice(rem[r],1);
 		}
+		
+		var erem = [];
+		for (var e=0; e<explosions.length; e+=1) {
+			ctx.drawImage(explosionImg,explosions[e].x+25,explosions[e].y+25,100,100);
+			explosions[e].time -=1;
+			if (explosions[e].time <= 0) {
+				erem.push(e);
+			}
+		}
+		for (var er=0; er<erem.length; er+=1) {
+			explosions.splice(erem[er],1);
+		}
+		
+		if (directions===true) {
+			ctx.fillStyle = "48pt Calibri";
+			ctx.fillText(directionsText,100,100);
+		}
+		
 		
   }
 
@@ -255,6 +305,24 @@ function updateBox(box) {
       wrapText(ctx, box.text, px+70, py+30, 350, 20);
     	ctx.drawImage(intenseTrump, px, py, 70, 85);
 	
+			var d = Math.sqrt(Math.pow(player.x-box.x,2)+Math.pow(player.y-box.y,2));
+			if (d < 5) {
+					// hit!
+				console.log("got hit!");
+				health -= 5;
+				var bar = document.getElementById("bar");
+				bar.style.width = (health+"%");
+				
+				if (health < 30) {
+					bar.style.backgroundColor = "red";
+				}
+				box.done = true;
+				// explode
+				china.play();
+				explosions.push({'x':box.x-50,'y':box.y-50,'time':70});
+				
+			}
+	
 }
 
 
@@ -263,8 +331,12 @@ function updateBox(box) {
 
 function init() {
 	
-	trumpPic = new Image();
-  trumpPic.src = "https://pbs.twimg.com/profile_images/874276197357596672/kUuht00m_400x400.jpg";
+	
+	
+	whitehouseImg = new Image();
+	whitehouseImg.src = "/img/whitehouse.jpg";
+	//trumpPic = new Image();
+  //trumpPic.src = "https://pbs.twimg.com/profile_images/874276197357596672/kUuht00m_400x400.jpg";
 	intenseTrump = new Image();
 	intenseTrump.src = "/img/intensetrump.png";
 	lightsaberImg = new Image();
@@ -274,11 +346,19 @@ function init() {
 	lightsaberImg.src = '/img/lightsaber1.png'
 	slashImg = new Image();
 	slashImg.src = "/img/slash.png";
+	explosionImg = new Image();
+	explosionImg.src = "/img/explosion.png";
 	
 	
 	
   gameArea.prep();
+	
+	
+	
+	
 	player = Player();
+	
+	
   
   // get mouse coortinates for rotation
   gameArea.canvas.addEventListener('mousemove', function(evt) { 
@@ -287,6 +367,7 @@ function init() {
     mousey = mousePos.y;
   }, false);
 	gameArea.canvas.addEventListener('click', function(evt) {
+		
 		swing(player.picnum);
 // 		console.log(player.orientation);
 		var toDelete = [];
@@ -302,6 +383,10 @@ function init() {
 			
 			if (d < 80) { // distance from box to sword
 				  //gameArea.context.drawImage(slashImg,b.x-50,b.y-50,100,100);
+					audio.play();
+				  score += 1;
+					var sc = document.getElementById("score");
+					sc.innerHTML = "score:"+score;
 					slashes.push({'x':b.x-50,'y':b.y-50,'time':100}); // the array of slashes to render during the update function
 					toDelete.push(i);
 			}
@@ -328,66 +413,6 @@ window.onblur = function () { // do not load boxes
 window.onfocus = function() {
 	generateBoxes = true;
 }
-
-
-
-
-
-/************************************ Add Progress Bar *******************************/
-window.onload = function() {
-		generateBoxes = true;
-
-	document.getElementById("")
-  var hBar = document.getElementById("health-bar"),
-      bar = document.getElementById("bar"),
-      hit = document.getElementById("hit");
-  
-  hitBtn.on("click", function(){
-    var total = hBar.data('total'),
-        value = hBar.data('value');
-    
-    if (value < 0) {
-			log("you dead, reset");
-      return;
-    }
-    // max damage is essentially quarter of max life
-    var damage = Math.floor(Math.random()*total);
-    // damage = 100;
-    var newValue = value - damage;
-    // calculate the percentage of the total width
-    var barWidth = (newValue / total) * 100;
-    var hitWidth = (damage / value) * 100 + "%";
-    
-    // show hit bar and set the width
-    hit.css('width', hitWidth);
-    hBar.data('value', newValue);
-    
-    setTimeout(function(){
-      hit.css({'width': '0'});
-      bar.css('width', barWidth + "%");
-    }, 500);
-		
-    //bar.css('width', total - value);
-    
-    log(value, damage, hitWidth);
-    
-    if( value < 0){
-      log("DEAD");
-    }
-		
-  });
-  
-  reset.on('click', function(e){
-    hBar.data('value', hBar.data('total'));
-    
-    hit.css({'width': '0'});
-    
-		bar.css('width', '100%');
-		log("resetting health to 1000");
-  });
-	
-}
-
 
 
 

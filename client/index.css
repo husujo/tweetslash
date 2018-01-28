@@ -1,32 +1,39 @@
-.health-bar {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  width: 200px;
-  height: 20px;
-  padding: 5px;
-  background: #ddd;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  border-radius: 5px;
-  position: relative;
+#topbar {
+  display:flex;
 }
-.bar {
-  background: #c54;
-  width: 100%;
-  height: 10px;
-  position: relative;
+#bar {
+    width: 90%;
+    height: 30px;
+    background-color: #4CAF50;
+    text-align: center; /* To center it horizontally (if you want) */
+    line-height: 30px; /* To center it vertically */
+    color: white; 
   
-  transition: width .5s linear;
+    position: absolute;
+    z-index: 2;
+/*     flex:9; */
 }
 
-.hit {
-  background: rgba(255,255,255,0.6);
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 0px;
-  
-  transition: width .5s linear;
+#tut {
+  font-size:50px;
+  z-index: 3;
+  text-align:center;
+  vertical-align:10px;
+/*   font-style:"bold"; */
+  width:"1000px";
+  height:"100px";
+}
+
+#health-bar {
+  flex:9;
+}
+
+#score {
+  flex:1;
+}
+
+#myCanvas{ position: absolute; z-index: 1 }
+
+#gamecontainer {
+  position: relative;
 }
